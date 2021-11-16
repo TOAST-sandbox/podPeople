@@ -60,13 +60,13 @@ if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" ]] ; 
    
    ===========
    
-   " >&2 ;
-   exit 0 ;
-fi ;
+   " >&2
+   exit 0
+fi
 
 ### make output directories if needed
 if [[ ! -d "$2" ]]; then
-  mkdir $2;
+  mkdir $2
   mkdir $2/02.fastq-interleaved
   mkdir $2/03.fastq-scrubbed
   mkdir $2/04.bam
@@ -79,14 +79,14 @@ fi
 
 ### wrap pipelin into a function 
 function anonymize {
-  r1=$1;
+  r1=$1
   outdir=$2
-  ref=$3;    
-  readid=$(basename $r1 | sed -e 's/_L[0-9]*.*//g' -e 's/_1.f.*//');
+  ref=$3    
+  readid=$(basename $r1 | sed -e 's/_L[0-9]*.*//g' -e 's/_1.f.*//')
 
 # step-1: Interleave R1 and R2
 
-  r2=$(echo $r1 | sed -e 's/_R1_/_R2_/g' -e 's/_1.f/_2.f/');
+  r2=$(echo $r1 | sed -e 's/_R1_/_R2_/g' -e 's/_1.f/_2.f/')
   intlv="$outdir/02.fastq-interleaved/$readid.interleaved.fastq"
   #intlv=$(basename $r1 | sed 's/R1_001/interleaved/g');
 
@@ -95,111 +95,111 @@ function anonymize {
   echo "interleaved $intlv"
 
   if [ ! -f $intlv ];then
-    zcat $r1 $r2 | fasten_shuffle > $intlv;
+    zcat $r1 $r2 | fasten_shuffle > $intlv
   fi
 
 # step-2: Human read scrubber and repair broken pairs
 
-  scrb=$outdir/03.fastq-scrubbed/$(basename $intlv .interleaved.fastq).scrubbed.fastq;
+  scrb=$outdir/03.fastq-scrubbed/$(basename $intlv .interleaved.fastq).scrubbed.fastq
   tmp=${scrb/.scrubbed.fastq/.tmp.fastq}
   single=${scrb/.scrubbed.fastq/.single.fastq}
   rtmp=${scrb/.scrubbed.fastq/.rtmp.fastq}
   rsingle=${scrb/.scrubbed.fastq/.rsingle.fastq}
   rmvd=${scrb/.scrubbed.fastq/.removed.fastq}
 
-  if [ ! -f $scrb ];then
-    scrub.sh -r $intlv;
-    cat $intlv.clean | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $tmp;
-    cat $intlv.removed_spots | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $rtmp;
+  if [ ! -f $scrb ]; then
+    scrub.sh -r $intlv
+    cat $intlv.clean | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $tmp
+    cat $intlv.removed_spots | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $rtmp
 
     bbsplitpairs.sh in=$tmp out=$scrb outs=$single fint
     bbsplitpairs.sh in=$rtmp out=$rmvd outs=$rsingle fint
 
   fi
-  echo -e "\tScrubbed....[x]";
+  echo -e "\tScrubbed....[x]"
 
 # step-3: Bowtie2 map to human reference
 
-  bm=$outdir/04.bam/$(basename $intlv .fastq).t2t.bam;
+  bm=$outdir/04.bam/$(basename $intlv .fastq).t2t.bam
 
   if [ ! -f $bm ];then
     bowtie2 \
     -X 1000 \
     -p "${NSLOTS}" -x $ref \
-    --interleaved $rmvd | samtools view -b -F 12 > $bm.tmp;
+    --interleaved $rmvd | samtools view -b -F 12 > $bm.tmp
 
     mv $bm.tmp $bm
   fi
-  echo -e "\tMapped to reference....[x]";
+  echo -e "\tMapped to reference....[x]"
 
 # step-4: Replace patient sequence with corresponding T2T reference sequence
 
-  rfq=$outdir/05.fastq-replaceref/$(basename $bm .bam).fastq;
+  rfq=$outdir/05.fastq-replaceref/$(basename $bm .bam).fastq
 
   if [ ! -f $rfq ];then
     replaceReadsWithReference.pl \
-    $ref $bm 1> $rfq.tmp 2> $rfq.stderr.log;
+    $ref $bm 1> $rfq.tmp 2> $rfq.stderr.log
 
     bbsplitpairs.sh in=$rfq.tmp out=$rfq.clean outs=$rfq.single fint
 
   fi
-  echo -e "\tRead sequences replaced....[x]";
+  echo -e "\tRead sequences replaced....[x]"
 
 
 # step-5: Combine, shuffle, separate into R1 and R2 for SRA submission
 
-  f1=$outdir/06.fastq-forSRA/$(basename $r1);
-  f2=$outdir/06.fastq-forSRA/$(basename $r2);
+  f1=$outdir/06.fastq-forSRA/$(basename $r1)
+  f2=$outdir/06.fastq-forSRA/$(basename $r2)
 
   if [ ! -f $f1 ];then
     cat $scrb $rfq | sed 's/\sreplaced.*//g' | \
     fasten_randomize -n "${NSLOTS}" -p | \
     fasten_shuffle -n "${NSLOTS}" -d \
-    -1 $f1.tmp -2 $f2.tmp;
+    -1 $f1.tmp -2 $f2.tmp
 
     mv $f1.tmp $f1
     mv $f2.tmp $f2
   fi
-  echo -e "\tReads prepared for SRA....[x]";
+  echo -e "\tReads prepared for SRA....[x]"
 
 # step-6: Summarize some count metrics
 
-  sum=$outdir/07.summary/$(basename $intlv .fastq).stats.tsv;
+  sum=$outdir/07.summary/$(basename $intlv .fastq).stats.tsv
 
-  RAW=$(wc -l $intlv | awk '{print $1/8}');
-  SCRpass=$(wc -l $scrb | awk '{print $1/8}');
-  T2Treplaced=$(wc -l $rfq | awk '{print $1/8}');
-  TOTsra=$(wc -l $f1 | awk '{print $1/4}');
-  FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}' );
-  SCRfail=$(wc -l $rmvd | awk '{print $1/8}');
+  RAW=$(wc -l $intlv | awk '{print $1/8}')
+  SCRpass=$(wc -l $scrb | awk '{print $1/8}')
+  T2Treplaced=$(wc -l $rfq | awk '{print $1/8}')
+  TOTsra=$(wc -l $f1 | awk '{print $1/4}')
+  FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}' )
+  SCRfail=$(wc -l $rmvd | awk '{print $1/8}')
 
   if [ "$RAW" -gt "$SCRpass" ];then
-          T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}' );
+          T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}' )
   else
-          T2F=0;
+          T2F=0
   fi
 
-  echo -e "ReadID\tRaw_pairs\tScrub_pass\tScrub_remove\tReplaced_pairs\tReplaced_frac\tTotal_pairs_final\tHuman_frac_final" > $sum;
-  echo -e "$readid\t$RAW\t$SCRpass\t$SCRfail\t$T2Treplaced\t$T2F\t$TOTsra\t$FHS" >> $sum;
+  echo -e "ReadID\tRaw_pairs\tScrub_pass\tScrub_remove\tReplaced_pairs\tReplaced_frac\tTotal_pairs_final\tHuman_frac_final" > $sum
+  echo -e "$readid\t$RAW\t$SCRpass\t$SCRfail\t$T2Treplaced\t$T2F\t$TOTsra\t$FHS" >> $sum
 
 
-echo -e "\tPipeline finished!\n";
+echo -e "\tPipeline finished!\n"
 
 }
 export -f anonymize
 ####
 
-echo -e "\nInput directory is:" $1;
-echo -e "Output directory is:" $2;
-echo -e "\nAnonymizing host reads..."; 
+echo -e "\nInput directory is:" $1
+echo -e "Output directory is:" $2
+echo -e "\nAnonymizing host reads..."
 
 #for i in $(find $1/*R1*fastq); do
 R1s=$(\ls -f1 $1/*_R1*.fastq.gz $1/*_1.fastq.gz || true)
 for i in $R1s; do
-  anonymize $i $2 $3;
+  anonymize $i $2 $3
 
 done
 
-cat $2/07.summary/*tsv | head -1 > $2/Summary.tsv;
-cat $2/07.summary/*tsv | grep -v "^ReadID" | sort >> $2/Summary.tsv;
+cat $2/07.summary/*tsv | head -1 > $2/Summary.tsv
+cat $2/07.summary/*tsv | grep -v "^ReadID" | sort >> $2/Summary.tsv
 
