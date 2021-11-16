@@ -33,7 +33,7 @@ function check {
     fi
     $exe --help >/dev/null 2>&1
     if [ $? -gt 0 ]; then
-      echo "ERROR: non-zero exit status running `$exe -h`" >&2
+      echo "ERROR: non-zero exit status running \`$exe --help\`" >&2
       exit 1
     fi
   done
