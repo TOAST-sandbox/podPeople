@@ -1,5 +1,7 @@
 .DELETE_ON_ERROR:
 
+.LOW_RESOLUTION_TIME:
+
 .DEFAULT: install db/t2t-chm13.fasta
 
 install: ngs-tools/tools/tax/Makefile
@@ -9,6 +11,10 @@ install: ngs-tools/tools/tax/Makefile
 ngs-tools/tools/tax/Makefile:
 	git clone https://github.com/ncbi/ngs-tools.git --branch tax
 
+sra-human-scrubber-1.1.2021-05-05/data/human_filter.db:
+	wget https://github.com/ncbi/sra-human-scrubber/archive/refs/tags/1.1.2021-05-05.tar.gz 
+	tar zxvf 1.1.2021-05-05.tar.gz
+	cd sra-human-scrubber-1.1.2021-05-05 && bash init_db.sh
 
 # List of chromosomes obtained by:
 #   esearch -db assembly -query GCA_009914755.3 | elink -target nuccore | esummary | xtract -pattern DocumentSummary -element Caption | perl -lane 'print "db/$F[0].chrom.fasta"' | tr '\n' ' '; echo;
@@ -30,5 +36,6 @@ db/%.chrom.fasta:
 	mkdir -p $$(dirname $@)
 	esearch -db nuccore -query $$(basename $@ .chrom.fasta) | efetch -format fasta > $@
 	# Must have at least 2 lines in the fasta file
-	[[ "$$(wc -l < $@)" -gt 1 ]]
+	# Use `head` so that it doesn't load the whole huge file
+	[[ "$$(head $@ | wc -l)" -gt 1 ]]
 
