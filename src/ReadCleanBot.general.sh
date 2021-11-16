@@ -52,23 +52,31 @@ fi
 
 if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" ]]; then
    echo "
-   ===========
+===========
 
-   This script replaces the sequence of human read contaminants from individuals (patients) with the corresponding sequence in a published human reference genome.
+Replaces the sequence of human read contaminants from individuals (patients)
+with the corresponding sequence in a published human reference genome.
 
-   ===========
+===========
 
-   Usage: ./ReadCleanBot.general [--check] <in-dir> <out-dir> <path-to-ref>
+Usage: ./ReadCleanBot.general [--check] <in-dir> <out-dir> <ref-file>
 
-   in-dir  Path to the directory containing the raw reads pairs in fastq format with filenames like 'name_S1_L001_R[12]_001.fastq'.
+Required:
+  <in-dir>      Path to the directory containing the raw reads pairs in FastQ
+                format with filenames like 'name_S1_L001_R[12]_001.fastq'
+                or 'name_[12].fastq'.
 
-   out-dir  Path to the new output directory.
+  <out-dir>     Path to the new output directory.
 
-   path-to-ref  Path to the human reference genome assembly fasta (must be indexed for bowtie2)
+  <ref-file>    Path to the human reference genome assembly FastA (must be
+                indexed for bowtie2).
 
-   --check  Check dependencies before running the algorithm. Exit code is 0 for no error; 1 for missing dependency.
+Optional:
+   --check      Check dependencies before running the algorithm. Exit code is
+                0 for no error; 1 for missing dependency.
+   -h | --help  Show this help message and exit.
 
-   ===========
+===========
 
    " >&2
    exit 0
