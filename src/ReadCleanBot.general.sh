@@ -15,15 +15,25 @@ function check {
 
   echo "Checking dependencies"
   echo "PATH: $PATH"
-  for exe in bedtools bbsplitpairs.sh bowtie2 gcc samtools fasten_shuffle replaceReadsWithReference.pl scrub.sh; do
-    which $exe 2>/dev/null
+  dependencies=(
+    bedtools
+    bbsplitpairs.sh
+    bowtie2
+    gcc
+    samtools
+    fasten_shuffle
+    replaceReadsWithReference.pl
+    scrub.sh
+    )
+  for exe in "${dependencies[@]}"; do
+    which $exe 2> /dev/null
     if [ $? -gt 0 ]; then
-      echo "Could not find $exe in PATH"
-      exit
+      echo "ERROR: Could not find $exe in PATH" >&2
+      exit 1
     fi
     $exe --help >/dev/null 2>&1
     if [ $? -gt 0 ]; then
-      echo "ERROR with running $exe -h"
+      echo "ERROR: non-zero exit status running `$exe -h`" >&2
       exit 1
     fi
   done
@@ -44,7 +54,7 @@ if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" ]]; t
    echo "
    ===========
 
-   This simple script to replaces the sequence of human read contaminants from individuals (patients) with the corresponding sequence in a published human reference genome.
+   This script replaces the sequence of human read contaminants from individuals (patients) with the corresponding sequence in a published human reference genome.
 
    ===========
 
@@ -152,8 +162,7 @@ function anonymize {
     cat $scrb $rfq | \
      sed 's/\sreplaced.*//g' | \
      fasten_randomize -n "${NSLOTS}" -p | \
-     fasten_shuffle -n "${NSLOTS}" -d \
-     -1 $f1.tmp -2 $f2.tmp
+     fasten_shuffle -n "${NSLOTS}" -d -1 $f1.tmp -2 $f2.tmp
 
     mv $f1.tmp $f1
     mv $f2.tmp $f2
@@ -195,5 +204,5 @@ for i in $R1s; do
   anonymize $i $2 $3
 done
 
-cat $2/07.summary/*tsv | head -1 > $2/Summary.tsv
-cat $2/07.summary/*tsv | grep -v "^ReadID" | sort >> $2/Summary.tsv
+cat $2/07.summary/*.tsv | head -1 > $2/Summary.tsv
+cat $2/07.summary/*.tsv | grep -v "^ReadID" | sort >> $2/Summary.tsv
