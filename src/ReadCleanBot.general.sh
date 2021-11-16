@@ -83,15 +83,20 @@ Optional:
 fi
 
 ### make output directories if needed
-if [[ ! -d "$2" ]]; then
-  mkdir $2
-  mkdir $2/02.fastq-interleaved
-  mkdir $2/03.fastq-scrubbed
-  mkdir $2/04.bam
-  mkdir $2/05.fastq-replaceref
-  mkdir $2/06.fastq-forSRA
-  mkdir $2/07.summary
-fi
+outdirs=(
+  "$2"
+  "$2/02.fastq-interleaved"
+  "$2/03.fastq-scrubbed"
+  "$2/04.bam"
+  "$2/05.fastq-replaceref"
+  "$2/06.fastq-forSRA"
+  "$2/07.summary"
+  )
+for outdir in "${outdirs[@]}"; do
+  if [[ ! -d "$outdir" ]]; then
+    mkdir $outdir
+  fi
+done
 
 ### wrap pipeline into a function
 function anonymize {
@@ -103,6 +108,11 @@ function anonymize {
 # step-1: Interleave R1 and R2
 
   r2=$(echo $r1 | sed -e 's/_R1_/_R2_/g' -e 's/_1.f/_2.f/')
+  if [ ! -f "${r2}" ]; then
+    echo "ERROR: ${r2} absent. Unable to pair with ${r1}" >&2
+    exit 1
+  fi
+
   intlv="$outdir/02.fastq-interleaved/$readid.interleaved.fastq"
 
   echo "R1          $r1"
