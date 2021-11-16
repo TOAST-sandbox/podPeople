@@ -137,15 +137,8 @@ function anonymize {
   if [ ! -f $rfq ];then
     replaceReadsWithReference.pl \
     $ref $bm 1> $rfq.tmp 2> $rfq.stderr.log;
-    mv $rfq.tmp $rfq
 
-    echo TODO
-    exit 43
-    
-    # Not sure what this step is, because $rfq.clean doesn't exist
-    #mv $outdir/05.fastq-replaceref/$rfq.clean $outdir/05.fastq-replaceref/$rfq.tmp
-
-    bbsplitpairs.sh in=$outdir/05.fastq-replaceref/$rfq.tmp out=$outdir/05.fastq-replaceref/$rfq.clean outs=$outdir/05.fastq-replaceref/$rfq.single fint
+    bbsplitpairs.sh in=$rfq.tmp out=$rfq.clean outs=$rfq.single fint
 
   fi
   echo -e "\tRead sequences replaced....[x]";
