@@ -100,9 +100,9 @@ function anonymize {
   echo "scrubbed    $scrb"
   tmp=${scrb/.scrubbed.fastq/.tmp.fastq}
   single=${scrb/.scrubbed.fastq/.single.fastq}
-    rtmp=${scrb/.scrubbed.fastq/.rtmp.fastq}
-    rsingle=${scrb/.scrubbed.fastq/.rsingle.fastq}
-    rmvd=${scrb/.scrubbed.fastq/.removed.fastq}
+  rtmp=${scrb/.scrubbed.fastq/.rtmp.fastq}
+  rsingle=${scrb/.scrubbed.fastq/.rsingle.fastq}
+  rmvd=${scrb/.scrubbed.fastq/.removed.fastq}
 
   if [ ! -f $scrb ];then
     scrub.sh -r $intlv;
@@ -111,7 +111,7 @@ function anonymize {
 
     set -x
     bbsplitpairs.sh in=$tmp out=$scrb outs=$single fint
-        bbsplitpairs.sh in=$rtmp out=$rmvd outs=$rsingle fint
+    bbsplitpairs.sh in=$rtmp out=$rmvd outs=$rsingle fint
 
   fi
   echo -e "\tScrubbed....[x]";
@@ -124,7 +124,7 @@ function anonymize {
     bowtie2 \
     -X 1000 \
     -p "${NSLOTS}" -x $ref \
-                --interleaved $rmvd | samtools view -b -F 12 > $bm.tmp;
+    --interleaved $rmvd | samtools view -b -F 12 > $bm.tmp;
 
     mv $bm.tmp $bm
   fi
@@ -170,20 +170,20 @@ function anonymize {
   sum=$(basename $intlv .fastq).stats.tsv;
 
   RAW=$(wc -l $outdir/02.fastq-interleaved/$intlv | awk '{print $1/8}');
-        SCRpass=$(wc -l $outdir/03.fastq-scrubbed/$scrb | awk '{print $1/8}');
-        T2Treplaced=$(wc -l $outdir/05.fastq-replaceref/$rfq | awk '{print $1/8}');
-        TOTsra=$(wc -l $outdir/06.fastq-forSRA/$f1 | awk '{print $1/4}');
-        FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}' );
-        SCRfail=$(wc -l $outdir/03.fastq-scrubbed/$rmvd | awk '{print $1/8}');
+  SCRpass=$(wc -l $outdir/03.fastq-scrubbed/$scrb | awk '{print $1/8}');
+  T2Treplaced=$(wc -l $outdir/05.fastq-replaceref/$rfq | awk '{print $1/8}');
+  TOTsra=$(wc -l $outdir/06.fastq-forSRA/$f1 | awk '{print $1/4}');
+  FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}' );
+  SCRfail=$(wc -l $outdir/03.fastq-scrubbed/$rmvd | awk '{print $1/8}');
 
-        if [ "$RAW" -gt "$SCRpass" ];then
-                T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}' );
-        else
-                T2F=0;
-        fi
+  if [ "$RAW" -gt "$SCRpass" ];then
+          T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}' );
+  else
+          T2F=0;
+  fi
 
-        echo -e "ReadID\tRaw_pairs\tScrub_pass\tScrub_remove\tReplaced_pairs\tReplaced_frac\tTotal_pairs_final\tHuman_frac_final" > ./07.summary/$sum;
-        echo -e "$readid\t$RAW\t$SCRpass\t$SCRfail\t$T2Treplaced\t$T2F\t$TOTsra\t$FHS" >> ./07.summary/$sum;
+  echo -e "ReadID\tRaw_pairs\tScrub_pass\tScrub_remove\tReplaced_pairs\tReplaced_frac\tTotal_pairs_final\tHuman_frac_final" > ./07.summary/$sum;
+  echo -e "$readid\t$RAW\t$SCRpass\t$SCRfail\t$T2Treplaced\t$T2F\t$TOTsra\t$FHS" >> ./07.summary/$sum;
 
 
 echo -e "\tPipeline finished!\n";
