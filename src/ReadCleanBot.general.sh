@@ -11,7 +11,7 @@ if [[ "$1" == "" ||"$2" == "" ||"$3" == "" || "$1" == "-help" || "$1" == "-h" ]]
    
    Usage: ./ReadCleanBot.general <in-dir> <out-dir> <path-to-ref>
 
-   in-dir	Path to the directory containing the raw reads pairs in fastq format with filenames like `name_S1_L001_R[12]_001.fastq`.
+   in-dir	Path to the directory containing the raw reads pairs in fastq format with filenames like 'name_S1_L001_R[12]_001.fastq'.
    
    out-dir	Path to the new output directory.
    		
