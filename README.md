@@ -6,8 +6,8 @@
 This simple workflow to replaces the sequence of human read contaminants from individuals (patients) with the corresponding sequence in a published human reference genome. Motivation for this project came from a need to prepare technical benchmark datasets containing human contamination with:  
 
 1. known quantities,
-1. more realistic distribution than simulated reads, 
-1. read sequences derived from published references
+2. more realistic distribution than simulated reads, and
+3. read sequences derived from published references.
 
 ---
 
@@ -52,18 +52,18 @@ Simplified and generalized for external distribution.
  
     *Command:* 
     ~~~
-    ./src/ReadCleanBot.general [in-dir] [out-dir] [path-to-ref]
-        [in-dir]      Path to directory of input reads pairs in fastq format with filenames like `name_S1_L001_R[12]_001.fastq`
-        [out-dir]     Path to new output directory.
-        [path-to-ref] Path to human reference genome assembly fasta (must be indexed for bowtie2).
+    ./src/ReadCleanBot.general [in-dir] [out-dir] [ref-file]
+        [in-dir]   Path to directory of input reads pairs in fastq format with filenames like `name_S1_L001_R[12]_001.fastq`
+        [out-dir]  Path to new output directory.
+        [ref-file] Path to human reference genome assembly fasta (must be indexed for bowtie2).
     ~~~
 
 
 ## Dependencies
 This workflow uses:
-1. NCBI human read removal tool (aka 'SRA scrubber') -- https://github.com/ncbi/sra-human-scrubber  
-1. Bowtie2  
-1. ReplaceReadsWithReference.pl -- https://github.com/lskatz/lskScripts/blob/master/scripts/replaceReadsWithReference.pl  
-1. Fasten -- https://github.com/lskatz/fasten  
-1. T2T human reference genome assembly -- https://www.ncbi.nlm.nih.gov/bioproject/559484  
-1. BBTools (bbsplitpairs.sh) -- https://jgi.doe.gov/data-and-tools/bbtools/  
+1. NCBI human read removal tool (aka 'SRA scrubber') -- [software repo](https://github.com/ncbi/sra-human-scrubber)  
+2. Bowtie2 -- [software repo](https://github.com/BenLangmead/bowtie2)
+3. ReplaceReadsWithReference.pl -- [script url](https://github.com/lskatz/lskScripts/blob/master/scripts/replaceReadsWithReference.pl)  
+4. Fasten -- [software repo](https://github.com/lskatz/fasten)
+5. T2T human reference genome assembly FastA file -- [file url](https://www.ncbi.nlm.nih.gov/bioproject/559484)
+6. BBTools (bbsplitpairs.sh) -- [software repo](https://jgi.doe.gov/data-and-tools/bbtools/)  
