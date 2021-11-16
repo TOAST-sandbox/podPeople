@@ -10,7 +10,7 @@ export PATH=$ROOT/../sra-human-scrubber-1.1.2021-05-05/bin:$PATH
 export PATH=$ROOT/../sra-human-scrubber-1.1.2021-05-05/scripts:$PATH
 
 function check {
-  # We'll do error handling outselves in this function
+  # Handling errors ourselves within this function
   set +e
 
   echo "Checking dependencies"
@@ -40,26 +40,26 @@ if [[ "$1" =~ -+check ]]; then
   exit 0
 fi
 
-if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" ]] ; then
+if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" ]]; then
    echo "
    ===========
 
    This simple script to replaces the sequence of human read contaminants from individuals (patients) with the corresponding sequence in a published human reference genome.
-   
+
    ===========
-   
+
    Usage: ./ReadCleanBot.general [--check] <in-dir> <out-dir> <path-to-ref>
 
    in-dir  Path to the directory containing the raw reads pairs in fastq format with filenames like 'name_S1_L001_R[12]_001.fastq'.
-   
+
    out-dir  Path to the new output directory.
-       
+
    path-to-ref  Path to the human reference genome assembly fasta (must be indexed for bowtie2)
 
    --check  Check dependencies before running the algorithm. Exit code is 0 for no error; 1 for missing dependency.
-   
+
    ===========
-   
+
    " >&2
    exit 0
 fi
@@ -75,26 +75,23 @@ if [[ ! -d "$2" ]]; then
   mkdir $2/07.summary
 fi
 
-#cd "${o}"
-
-### wrap pipelin into a function 
+### wrap pipeline into a function
 function anonymize {
   r1=$1
   outdir=$2
-  ref=$3    
+  ref=$3
   readid=$(basename $r1 | sed -e 's/_L[0-9]*.*//g' -e 's/_1.f.*//')
 
 # step-1: Interleave R1 and R2
 
   r2=$(echo $r1 | sed -e 's/_R1_/_R2_/g' -e 's/_1.f/_2.f/')
   intlv="$outdir/02.fastq-interleaved/$readid.interleaved.fastq"
-  #intlv=$(basename $r1 | sed 's/R1_001/interleaved/g');
 
   echo "R1          $r1"
   echo "R2          $r2"
   echo "interleaved $intlv"
 
-  if [ ! -f $intlv ];then
+  if [ ! -f $intlv ]; then
     zcat $r1 $r2 | fasten_shuffle > $intlv
   fi
 
@@ -114,7 +111,6 @@ function anonymize {
 
     bbsplitpairs.sh in=$tmp out=$scrb outs=$single fint
     bbsplitpairs.sh in=$rtmp out=$rmvd outs=$rsingle fint
-
   fi
   echo -e "\tScrubbed....[x]"
 
@@ -122,11 +118,13 @@ function anonymize {
 
   bm=$outdir/04.bam/$(basename $intlv .fastq).t2t.bam
 
-  if [ ! -f $bm ];then
+  if [ ! -f $bm ]; then
     bowtie2 \
-    -X 1000 \
-    -p "${NSLOTS}" -x $ref \
-    --interleaved $rmvd | samtools view -b -F 12 > $bm.tmp
+     -X 1000 \
+     -p "${NSLOTS}" \
+     -x $ref \
+     --interleaved $rmvd | \
+     samtools view -b -F 12 > $bm.tmp
 
     mv $bm.tmp $bm
   fi
@@ -136,12 +134,11 @@ function anonymize {
 
   rfq=$outdir/05.fastq-replaceref/$(basename $bm .bam).fastq
 
-  if [ ! -f $rfq ];then
+  if [ ! -f $rfq ]; then
     replaceReadsWithReference.pl \
-    $ref $bm 1> $rfq.tmp 2> $rfq.stderr.log
+     $ref $bm 1> $rfq.tmp 2> $rfq.stderr.log
 
     bbsplitpairs.sh in=$rfq.tmp out=$rfq.clean outs=$rfq.single fint
-
   fi
   echo -e "\tRead sequences replaced....[x]"
 
@@ -151,11 +148,12 @@ function anonymize {
   f1=$outdir/06.fastq-forSRA/$(basename $r1)
   f2=$outdir/06.fastq-forSRA/$(basename $r2)
 
-  if [ ! -f $f1 ];then
-    cat $scrb $rfq | sed 's/\sreplaced.*//g' | \
-    fasten_randomize -n "${NSLOTS}" -p | \
-    fasten_shuffle -n "${NSLOTS}" -d \
-    -1 $f1.tmp -2 $f2.tmp
+  if [ ! -f $f1 ]; then
+    cat $scrb $rfq | \
+     sed 's/\sreplaced.*//g' | \
+     fasten_randomize -n "${NSLOTS}" -p | \
+     fasten_shuffle -n "${NSLOTS}" -d \
+     -1 $f1.tmp -2 $f2.tmp
 
     mv $f1.tmp $f1
     mv $f2.tmp $f2
@@ -170,18 +168,17 @@ function anonymize {
   SCRpass=$(wc -l $scrb | awk '{print $1/8}')
   T2Treplaced=$(wc -l $rfq | awk '{print $1/8}')
   TOTsra=$(wc -l $f1 | awk '{print $1/4}')
-  FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}' )
+  FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}')
   SCRfail=$(wc -l $rmvd | awk '{print $1/8}')
 
-  if [ "$RAW" -gt "$SCRpass" ];then
-          T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}' )
+  if [ "$RAW" -gt "$SCRpass" ]; then
+    T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}')
   else
-          T2F=0
+    T2F=0
   fi
 
   echo -e "ReadID\tRaw_pairs\tScrub_pass\tScrub_remove\tReplaced_pairs\tReplaced_frac\tTotal_pairs_final\tHuman_frac_final" > $sum
   echo -e "$readid\t$RAW\t$SCRpass\t$SCRfail\t$T2Treplaced\t$T2F\t$TOTsra\t$FHS" >> $sum
-
 
 echo -e "\tPipeline finished!\n"
 
@@ -193,13 +190,10 @@ echo -e "\nInput directory is:" $1
 echo -e "Output directory is:" $2
 echo -e "\nAnonymizing host reads..."
 
-#for i in $(find $1/*R1*fastq); do
 R1s=$(\ls -f1 $1/*_R1*.fastq.gz $1/*_1.fastq.gz || true)
 for i in $R1s; do
   anonymize $i $2 $3
-
 done
 
 cat $2/07.summary/*tsv | head -1 > $2/Summary.tsv
 cat $2/07.summary/*tsv | grep -v "^ReadID" | sort >> $2/Summary.tsv
-
