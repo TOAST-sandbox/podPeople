@@ -44,13 +44,7 @@ export -f check
 
 ARGC=("$#")
 
-# Check for dependencies if --check
-if [[ "$1" =~ -+check ]]; then
-  check
-  exit 0
-fi
-
-if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" ]]; then
+if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" || "$1" == "" ]]; then
    echo "
 ===========
 
@@ -81,6 +75,13 @@ Optional:
    " >&2
    exit 0
 fi
+
+# Check for dependencies if --check
+if [[ "$1" =~ -+check ]]; then
+  check
+  exit 0
+fi
+
 
 ### make output directories if needed
 outdirs=(
