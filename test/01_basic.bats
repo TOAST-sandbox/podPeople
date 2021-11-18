@@ -24,7 +24,7 @@ function note(){
     note "ERROR with basic test"
     exit 1
   fi
-  ls -R basic.out
-  column -ts $'\t' basic.out/Summary.tsv
+  ls -R basic.out | sed 's/^/# /' >&3
+  column -ts $'\t' basic.out/Summary.tsv | sed 's/^/# /' >&3
 }
 

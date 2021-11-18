@@ -205,7 +205,8 @@ function anonymize {
   T2Treplaced=$(wc -l $rfq | awk '{print $1/8}')
   TOTsra=$(wc -l $f1 | awk '{print $1/4}')
   FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}')
-  SCRfail=$(wc -l $rmvd | awk '{print $1/8}')
+  #SCRfail=$(wc -l $rmvd | awk '{print $1/8}')
+  SCRfail="DEBUG"
 
   #if [ "$RAW" -gt "$SCRpass" ]; then
   #  T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}')

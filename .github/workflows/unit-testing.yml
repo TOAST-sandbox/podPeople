@@ -41,10 +41,10 @@ jobs:
           echo
           echo "$GITHUB_PATH"
           cat $GITHUB_PATH
-          find . -name scrub.sh
       - name: install fasten
         run:  |
           cargo install fasten
+          which fasten_shuffle
       - name: make db
         run:  |
           mkdir -v db
