@@ -31,8 +31,16 @@ jobs:
           # Mark that we now have scrub.sh
           echo "sra-human-scrubber-1.1.2021-05-05/scripts" >> $GITHUB_PATH
           echo "sra-human-scrubber-1.1.2021-05-05/bin" >> $GITHUB_PATH
+          echo "ngs-tools/tools/tax/bin" >> $GITHUB_PATH
           echo
-          cat "$GITHUB_PATH"
+          cat $GITHUB_PATH
+      - name: env
+        run:  |
+          tree -d $(pwd -P)
+          echo $PATH | tr ':' '\n'
+          echo
+          echo "$GITHUB_PATH"
+          cat $GITHUB_PATH
       - name: install fasten
         run:  |
           cargo install fasten
