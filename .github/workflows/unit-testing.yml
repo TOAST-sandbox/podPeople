@@ -55,8 +55,7 @@ jobs:
       - name: install fasten
         run:  |
           # Detect if this has been cached
-          which fasten_shuffle || true
-          cargo install fasten
+          which fasten_shuffle || cargo install fasten
           which fasten_shuffle
       - name: make db
         run:  |
