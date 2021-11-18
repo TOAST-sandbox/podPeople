@@ -35,5 +35,4 @@ jobs:
           make db/t2t-chm13.fasta.1.bt2
       - name: run pipeline
         run:  |
-          conda activate -n bbtools
           bats test/*.bats
