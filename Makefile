@@ -22,7 +22,7 @@ db/t2t-chm13.fasta: db/CP068255.chrom.fasta db/CP068256.chrom.fasta db/CP068257.
 	cat $^ > $@
 	grep '>' $^
 	# We expect 22 autosomal + 1 X + 1 mitochondrial chromosome
-	[[ "$$(grep -c '>' $@)" == 24 ]]
+	if [[ "$$(grep -c '>' $@)" != 24 ]]; then echo "24 contigs were not found"; exit 1; fi;
 	# truncate the separate files but keep the filenames
 	for i in $^; do echo -n > $$i; done;
 
