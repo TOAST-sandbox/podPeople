@@ -37,5 +37,5 @@ db/%.chrom.fasta:
 	esearch -db nuccore -query $$(basename $@ .chrom.fasta) | efetch -format fasta > $@
 	# Must have at least 2 lines in the fasta file
 	# Use `head` so that it doesn't load the whole huge file
-	[[ "$$(head $@ | wc -l)" -gt 1 ]]
+	if [[ "$$(head $@ | wc -l)" -lt 2 ]]; then echo "fasta file was fewer than 2 lines"; exit 1; fi;
 
