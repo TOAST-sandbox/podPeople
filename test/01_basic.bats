@@ -12,7 +12,8 @@ function note(){
   run bash src/podPeople.sh --check
   note "$output"
   if [ "$status" -gt 0 ]; then
-    echo "ERROR: environment needs work"
+    note "ERROR: environment needs work"
+    exit $status
   fi
 }
 
