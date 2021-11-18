@@ -42,7 +42,7 @@ jobs:
           echo "$GITHUB_PATH"
           cat $GITHUB_PATH
       - name: Cache fasten
-        uses: actions/cache@2
+        uses: actions/cache@v2
         env:  
           cache-name: cache-fasten
         with:
