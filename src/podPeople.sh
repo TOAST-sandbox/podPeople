@@ -42,6 +42,12 @@ function check {
 }
 export -f check
 
+# Check for dependencies if --check
+if [[ "$1" =~ -+check ]]; then
+  check
+  exit 0
+fi
+
 ARGC=("$#")
 
 if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" || "$1" == "" ]]; then
@@ -53,7 +59,7 @@ with the corresponding sequence in a published human reference genome.
 
 ===========
 
-Usage: ./ReadCleanBot.general [--check] <in-dir> <out-dir> <ref-file>
+Usage: $(basename $0) [--check] <in-dir> <out-dir> <ref-file>
 
 Required:
   <in-dir>      Path to the directory containing the raw reads pairs in FastQ
@@ -74,12 +80,6 @@ Optional:
 
    " >&2
    exit 0
-fi
-
-# Check for dependencies if --check
-if [[ "$1" =~ -+check ]]; then
-  check
-  exit 0
 fi
 
 
