@@ -1,0 +1,35 @@
+# https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+# https://docs.github.com/en/actions/guides/publishing-docker-images
+# https://github.com/docker/build-push-action/blob/master/docs/advanced/share-image-jobs.md
+name: unit-testing
+on: [push, create]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    name: basic-workflow
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: apt-get
+        run:  sudo apt-get install ca-certificates sra-toolkit ncbi-entrez-direct
+      - name: install bats-core
+        run:  |
+          git clone https://github.com/bats-core/bats-core.git
+          cd bats-core
+          sudo ./install.sh /usr/local
+          cd -
+          # test the command
+          which bats
+          bats -h
+      - name: make install
+        run:  |
+          make install
+      - name: make db
+        run:  |
+          # abbreviate the database by making it think that
+          # most chromosomes are already there
+          touch db/CP068255.chrom.fasta db/CP068256.chrom.fasta db/CP068257.chrom.fasta db/CP068258.chrom.fasta db/CP068259.chrom.fasta db/CP068260.chrom.fasta db/CP068261.chrom.fasta db/CP068262.chrom.fasta db/CP068263.chrom.fasta db/CP068264.chrom.fasta db/CP068265.chrom.fasta db/CP068266.chrom.fasta db/CP068267.chrom.fasta db/CP068268.chrom.fasta db/CP068269.chrom.fasta db/CP068270.chrom.fasta db/CP068271.chrom.fasta db/CP068272.chrom.fasta db/CP068273.chrom.fasta db/CP068274.chrom.fasta db/CP068275.chrom.fasta db/CP068276.chrom.fasta db/CP068277.chrom.fasta db/CP068254.chrom.fasta
+          rm db/CP068254.chrom.fasta
+          make db/t2t-chm13.fasta.1.bt2
+
