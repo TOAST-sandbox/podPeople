@@ -25,6 +25,6 @@ function note(){
     exit 1
   fi
   ls -R basic.out
-  column -ts $'\t' basic.out/summary.tsv
+  column -ts $'\t' basic.out/Summary.tsv
 }
 
