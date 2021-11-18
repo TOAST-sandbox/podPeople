@@ -43,7 +43,6 @@ jobs:
           cat $GITHUB_PATH
       - name: Cache fasten
         uses: actions/cache@2
-        env:  cache-fasten
         with:
           path: /usr/share/rust/.cargo/bin
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
