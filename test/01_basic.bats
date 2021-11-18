@@ -10,7 +10,7 @@ function note(){
 
 @test "Environment" {
   run bash src/podPeople.sh --check
-  echo "$output"
+  echo "$output" | sed 's/^/# /' >&3
   if [ "$status" -gt 0 ]; then
     echo "ERROR: environment needs work"
   fi
