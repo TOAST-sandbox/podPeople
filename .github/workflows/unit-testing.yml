@@ -41,6 +41,7 @@ jobs:
           echo
           echo "$GITHUB_PATH"
           cat $GITHUB_PATH
+          find . -name scrub.sh
       - name: install fasten
         run:  |
           cargo install fasten
