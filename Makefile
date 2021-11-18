@@ -4,7 +4,7 @@
 
 .DEFAULT: install db/t2t-chm13.fasta
 
-install: ngs-tools/tools/tax/Makefile
+install: ngs-tools/tools/tax/Makefile sra-human-scrubber-1.1.2021-05-05/data/human_filter.db
 	cd ngs-tools/tools/tax && ./quickbuild.sh
 	@echo "remember: export PATH=$$(pwd -P)/ngs-tools/tools/tax/bin"
 
@@ -22,7 +22,7 @@ db/t2t-chm13.fasta: db/CP068255.chrom.fasta db/CP068256.chrom.fasta db/CP068257.
 	cat $^ > $@
 	grep '>' $^
 	# We expect 22 autosomal + 1 X + 1 mitochondrial chromosome
-	[[ "$$(grep -c '>' $@)" == 24 ]]
+	if [ "$$(grep -c '>' $@)" != 24 ]; then echo "24 contigs were not found"; exit 1; fi;
 	# truncate the separate files but keep the filenames
 	for i in $^; do echo -n > $$i; done;
 
@@ -37,5 +37,5 @@ db/%.chrom.fasta:
 	esearch -db nuccore -query $$(basename $@ .chrom.fasta) | efetch -format fasta > $@
 	# Must have at least 2 lines in the fasta file
 	# Use `head` so that it doesn't load the whole huge file
-	[[ "$$(head $@ | wc -l)" -gt 1 ]]
+	if [ "$$(head $@ | wc -l)" -lt 2 ]; then echo "fasta file was fewer than 2 lines"; exit 1; fi;
 

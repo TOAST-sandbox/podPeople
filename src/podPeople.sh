@@ -17,14 +17,14 @@ function check {
   echo "PATH: $PATH"
   dependencies=(
     bedtools
-    bbsplitpairs.sh
     bowtie2
     gcc
     samtools
     fasten_shuffle
     replaceReadsWithReference.pl
-    scrub.sh
     )
+    #scrub.sh
+    #bbsplitpairs.sh
   for exe in "${dependencies[@]}"; do
     which $exe 2> /dev/null
     if [ $? -gt 0 ]; then
@@ -42,6 +42,12 @@ function check {
 }
 export -f check
 
+# Check for dependencies if --check
+if [[ "$1" =~ -+check ]]; then
+  check
+  exit 0
+fi
+
 ARGC=("$#")
 
 if [[ "$ARGC" -lt 3 || "$1" == "--help" || "$1" == "-help" || "$1" == "-h" || "$1" == "" ]]; then
@@ -53,7 +59,7 @@ with the corresponding sequence in a published human reference genome.
 
 ===========
 
-Usage: ./ReadCleanBot.general [--check] <in-dir> <out-dir> <ref-file>
+Usage: $(basename $0) [--check] <in-dir> <out-dir> <ref-file>
 
 Required:
   <in-dir>      Path to the directory containing the raw reads pairs in FastQ
@@ -74,12 +80,6 @@ Optional:
 
    " >&2
    exit 0
-fi
-
-# Check for dependencies if --check
-if [[ "$1" =~ -+check ]]; then
-  check
-  exit 0
 fi
 
 
@@ -133,32 +133,32 @@ function anonymize {
   rsingle=${scrb/.scrubbed.fastq/.rsingle.fastq}
   rmvd=${scrb/.scrubbed.fastq/.removed.fastq}
 
-  if [ ! -f $scrb ]; then
-    scrub.sh -r $intlv
-    cat $intlv.clean | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $tmp
-    cat $intlv.removed_spots | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $rtmp
+  #if [ ! -f $scrb ]; then
+  #  scrub.sh -r $intlv
+  #  cat $intlv.clean | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $tmp
+  #  cat $intlv.removed_spots | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $rtmp
 
-    bbsplitpairs.sh in=$tmp out=$scrb outs=$single fint
-    bbsplitpairs.sh in=$rtmp out=$rmvd outs=$rsingle fint
-  fi
-  echo -e "\tScrubbed....[x]"
+  #  bbsplitpairs.sh in=$tmp out=$scrb outs=$single fint
+  #  bbsplitpairs.sh in=$rtmp out=$rmvd outs=$rsingle fint
+  #fi
+  #echo -e "\tScrubbed....[x]"
+  echo -e "\tScrubbed....[skip]" 
 
 # step-3: Bowtie2 map to human reference
 
   bm=$outdir/04.bam/$(basename $intlv .fastq).t2t.bam
 
   if [ ! -f $bm ]; then
-    set -x
     bowtie2 \
      -X 1000 \
      -p "${NSLOTS}" \
      -x $ref \
-     --interleaved $scrb | \
-     samtools view -b | \
-     samtools sort -n - > $bm.tmp
+     --interleaved $intlv | \
+     samtools view -bS > $bm.unsorted.bam
+
+     samtools sort -n $bm.unsorted.bam > $bm.tmp
 
     mv $bm.tmp $bm
-    set +x
   fi
   echo -e "\tMapped to reference....[x]"
 
@@ -167,13 +167,11 @@ function anonymize {
   rfq=$outdir/05.fastq-replaceref/$(basename $bm .bam).fastq
 
   if [ ! -f $rfq ]; then
-    set -x
     replaceReadsWithReference.pl \
      $ref $bm 1> $rfq.tmp 2> $rfq.stderr.log
 
-    mv $rfq.tmp $rfq
+    mv -v $rfq.tmp $rfq
     #bbsplitpairs.sh in=$rfq.tmp out=$rfq.clean outs=$rfq.single fint
-    set +x
   fi
   echo -e "\tRead sequences replaced....[x]"
 
@@ -183,14 +181,17 @@ function anonymize {
   f1=$outdir/06.fastq-forSRA/$(basename $r1)
   f2=$outdir/06.fastq-forSRA/$(basename $r2)
 
-  if [ ! -f $f1 ]; then
-    cat $scrb $rfq | \
-     sed 's/\sreplaced.*//g' | \
-     fasten_randomize -n "${NSLOTS}" -p | \
-     fasten_shuffle -n "${NSLOTS}" -d -1 $f1.tmp -2 $f2.tmp
 
+  if [ ! -f $f1 ]; then
+    cat $rfq | fasten_shuffle -d -1 $f1.tmp -2 $f2.tmp
     mv $f1.tmp $f1
     mv $f2.tmp $f2
+
+  #  cat $scrb $rfq | \
+  #   sed 's/\sreplaced.*//g' | \
+  #   fasten_randomize -n "${NSLOTS}" -p | \
+  #   fasten_shuffle -n "${NSLOTS}" -d -1 $f1.tmp -2 $f2.tmp
+
   fi
   echo -e "\tReads prepared for SRA....[x]"
 
@@ -199,17 +200,19 @@ function anonymize {
   sum=$outdir/07.summary/$(basename $intlv .fastq).stats.tsv
 
   RAW=$(wc -l $intlv | awk '{print $1/8}')
-  SCRpass=$(wc -l $scrb | awk '{print $1/8}')
+  #SCRpass=$(wc -l $scrb | awk '{print $1/8}')
+  SCRpass="DEBUG"
   T2Treplaced=$(wc -l $rfq | awk '{print $1/8}')
   TOTsra=$(wc -l $f1 | awk '{print $1/4}')
   FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}')
-  SCRfail=$(wc -l $rmvd | awk '{print $1/8}')
+  #SCRfail=$(wc -l $rmvd | awk '{print $1/8}')
+  SCRfail="DEBUG"
 
-  if [ "$RAW" -gt "$SCRpass" ]; then
-    T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}')
-  else
+  #if [ "$RAW" -gt "$SCRpass" ]; then
+  #  T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}')
+  #else
     T2F=0
-  fi
+  #fi
 
   echo -e "ReadID\tRaw_pairs\tScrub_pass\tScrub_remove\tReplaced_pairs\tReplaced_frac\tTotal_pairs_final\tHuman_frac_final" > $sum
   echo -e "$readid\t$RAW\t$SCRpass\t$SCRfail\t$T2Treplaced\t$T2F\t$TOTsra\t$FHS" >> $sum
