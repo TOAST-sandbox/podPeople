@@ -28,6 +28,11 @@ jobs:
       - name: make install
         run:  |
           make install
+          # Mark that we now have scrub.sh
+          echo "sra-human-scrubber-1.1.2021-05-05/scripts" >> $GITHUB_PATH
+          echo "sra-human-scrubber-1.1.2021-05-05/bin" >> $GITHUB_PATH
+          echo
+          cat "$GITHUB_PATH"
       - name: install fasten
         run:  |
           cargo install fasten
