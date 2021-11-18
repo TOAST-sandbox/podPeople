@@ -22,8 +22,8 @@ function check {
     samtools
     fasten_shuffle
     replaceReadsWithReference.pl
-    scrub.sh
     )
+    #scrub.sh
     #bbsplitpairs.sh
   for exe in "${dependencies[@]}"; do
     which $exe 2> /dev/null

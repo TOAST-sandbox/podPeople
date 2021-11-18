@@ -4,7 +4,7 @@
 
 .DEFAULT: install db/t2t-chm13.fasta
 
-install: ngs-tools/tools/tax/Makefile
+install: ngs-tools/tools/tax/Makefile sra-human-scrubber-1.1.2021-05-05/data/human_filter.db
 	cd ngs-tools/tools/tax && ./quickbuild.sh
 	@echo "remember: export PATH=$$(pwd -P)/ngs-tools/tools/tax/bin"
 
