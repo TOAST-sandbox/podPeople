@@ -17,7 +17,6 @@ function check {
   echo "PATH: $PATH"
   dependencies=(
     bedtools
-    bbsplitpairs.sh
     bowtie2
     gcc
     samtools
@@ -25,6 +24,7 @@ function check {
     replaceReadsWithReference.pl
     scrub.sh
     )
+    #bbsplitpairs.sh
   for exe in "${dependencies[@]}"; do
     which $exe 2> /dev/null
     if [ $? -gt 0 ]; then
@@ -133,15 +133,16 @@ function anonymize {
   rsingle=${scrb/.scrubbed.fastq/.rsingle.fastq}
   rmvd=${scrb/.scrubbed.fastq/.removed.fastq}
 
-  if [ ! -f $scrb ]; then
-    scrub.sh -r $intlv
-    cat $intlv.clean | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $tmp
-    cat $intlv.removed_spots | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $rtmp
+  #if [ ! -f $scrb ]; then
+  #  scrub.sh -r $intlv
+  #  cat $intlv.clean | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $tmp
+  #  cat $intlv.removed_spots | sed 's/\s/\//g' | sed 's/\:N\:0.*//g' > $rtmp
 
-    bbsplitpairs.sh in=$tmp out=$scrb outs=$single fint
-    bbsplitpairs.sh in=$rtmp out=$rmvd outs=$rsingle fint
-  fi
-  echo -e "\tScrubbed....[x]"
+  #  bbsplitpairs.sh in=$tmp out=$scrb outs=$single fint
+  #  bbsplitpairs.sh in=$rtmp out=$rmvd outs=$rsingle fint
+  #fi
+  #echo -e "\tScrubbed....[x]"
+  echo -e "\tScrubbed....[skip]" 
 
 # step-3: Bowtie2 map to human reference
 
