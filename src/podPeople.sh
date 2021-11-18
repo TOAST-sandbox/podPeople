@@ -149,17 +149,16 @@ function anonymize {
   bm=$outdir/04.bam/$(basename $intlv .fastq).t2t.bam
 
   if [ ! -f $bm ]; then
-    set -x
     bowtie2 \
      -X 1000 \
      -p "${NSLOTS}" \
      -x $ref \
-     --interleaved $scrb | \
-     samtools view -b | \
-     samtools sort -n - > $bm.tmp
+     --interleaved $intlv | \
+     samtools view -bS > $bm.unsorted.bam
+
+     samtools sort -n $bm.unsorted.bam > $bm.tmp
 
     mv $bm.tmp $bm
-    set +x
   fi
   echo -e "\tMapped to reference....[x]"
 
@@ -168,13 +167,11 @@ function anonymize {
   rfq=$outdir/05.fastq-replaceref/$(basename $bm .bam).fastq
 
   if [ ! -f $rfq ]; then
-    set -x
     replaceReadsWithReference.pl \
      $ref $bm 1> $rfq.tmp 2> $rfq.stderr.log
 
-    mv $rfq.tmp $rfq
+    mv -v $rfq.tmp $rfq
     #bbsplitpairs.sh in=$rfq.tmp out=$rfq.clean outs=$rfq.single fint
-    set +x
   fi
   echo -e "\tRead sequences replaced....[x]"
 
@@ -184,14 +181,17 @@ function anonymize {
   f1=$outdir/06.fastq-forSRA/$(basename $r1)
   f2=$outdir/06.fastq-forSRA/$(basename $r2)
 
-  if [ ! -f $f1 ]; then
-    cat $scrb $rfq | \
-     sed 's/\sreplaced.*//g' | \
-     fasten_randomize -n "${NSLOTS}" -p | \
-     fasten_shuffle -n "${NSLOTS}" -d -1 $f1.tmp -2 $f2.tmp
 
+  if [ ! -f $f1 ]; then
+    cat $rfq | fasten_shuffle -d -1 $f1.tmp -2 $f2.tmp
     mv $f1.tmp $f1
     mv $f2.tmp $f2
+
+  #  cat $scrb $rfq | \
+  #   sed 's/\sreplaced.*//g' | \
+  #   fasten_randomize -n "${NSLOTS}" -p | \
+  #   fasten_shuffle -n "${NSLOTS}" -d -1 $f1.tmp -2 $f2.tmp
+
   fi
   echo -e "\tReads prepared for SRA....[x]"
 
@@ -200,17 +200,18 @@ function anonymize {
   sum=$outdir/07.summary/$(basename $intlv .fastq).stats.tsv
 
   RAW=$(wc -l $intlv | awk '{print $1/8}')
-  SCRpass=$(wc -l $scrb | awk '{print $1/8}')
+  #SCRpass=$(wc -l $scrb | awk '{print $1/8}')
+  SCRpass="DEBUG"
   T2Treplaced=$(wc -l $rfq | awk '{print $1/8}')
   TOTsra=$(wc -l $f1 | awk '{print $1/4}')
   FHS=$(echo "scale=4; $T2Treplaced/$TOTsra" | bc | awk '{printf "%.4f", $0}')
   SCRfail=$(wc -l $rmvd | awk '{print $1/8}')
 
-  if [ "$RAW" -gt "$SCRpass" ]; then
-    T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}')
-  else
+  #if [ "$RAW" -gt "$SCRpass" ]; then
+  #  T2F=$(echo "scale=4; $T2Treplaced/$SCRfail" | bc | awk '{printf "%.4f", $0}')
+  #else
     T2F=0
-  fi
+  #fi
 
   echo -e "ReadID\tRaw_pairs\tScrub_pass\tScrub_remove\tReplaced_pairs\tReplaced_frac\tTotal_pairs_final\tHuman_frac_final" > $sum
   echo -e "$readid\t$RAW\t$SCRpass\t$SCRfail\t$T2Treplaced\t$T2F\t$TOTsra\t$FHS" >> $sum
