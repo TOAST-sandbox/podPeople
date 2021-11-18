@@ -148,14 +148,17 @@ function anonymize {
   bm=$outdir/04.bam/$(basename $intlv .fastq).t2t.bam
 
   if [ ! -f $bm ]; then
+    set -x
     bowtie2 \
      -X 1000 \
      -p "${NSLOTS}" \
      -x $ref \
-     --interleaved $rmvd | \
-     samtools view -b -F 12 > $bm.tmp
+     --interleaved $scrb | \
+     samtools view -b | \
+     samtools sort -n - > $bm.tmp
 
     mv $bm.tmp $bm
+    set +x
   fi
   echo -e "\tMapped to reference....[x]"
 
@@ -164,10 +167,13 @@ function anonymize {
   rfq=$outdir/05.fastq-replaceref/$(basename $bm .bam).fastq
 
   if [ ! -f $rfq ]; then
+    set -x
     replaceReadsWithReference.pl \
      $ref $bm 1> $rfq.tmp 2> $rfq.stderr.log
 
-    bbsplitpairs.sh in=$rfq.tmp out=$rfq.clean outs=$rfq.single fint
+    mv $rfq.tmp $rfq
+    #bbsplitpairs.sh in=$rfq.tmp out=$rfq.clean outs=$rfq.single fint
+    set +x
   fi
   echo -e "\tRead sequences replaced....[x]"
 
