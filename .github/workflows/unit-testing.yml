@@ -13,6 +13,9 @@ jobs:
         uses: actions/checkout@v2
       - name: apt-get
         run:  sudo apt-get install ca-certificates sra-toolkit ncbi-entrez-direct bowtie2 samtools build-essential make bedtools
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - name: install bats-core
         run:  |
           git clone https://github.com/bats-core/bats-core.git
@@ -25,6 +28,9 @@ jobs:
       - name: make install
         run:  |
           make install
+      - name: install fasten
+        run:  |
+          cargo install fasten
       - name: make db
         run:  |
           mkdir -v db
