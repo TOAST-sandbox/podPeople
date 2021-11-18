@@ -5,9 +5,11 @@
 NUMCPUS=24
 THISDIR=$BATS_TEST_DIRNAME
 BINDIR="$THISDIR/../bin"
+SRCDIR="$THISDIR/../src"
 
-export PATH=$BINDIR:$PATH
+export PATH=$BINDIR:$SRCDIR:$PATH
 run mkdir -pv $BINDIR
+run mkdir -pv $SRCDIR
 
 # special environment for CI environment
 if [[ "$CI" == true ]]; then
